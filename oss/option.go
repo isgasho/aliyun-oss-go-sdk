@@ -24,6 +24,8 @@ const (
 	initCRC64          = "init-crc64"
 	progressListener   = "x-progress-listener"
 	storageClass       = "storage-class"
+	responseHeader     = "x-response-header"
+	keysVersions       = "keys-versions"
 )
 
 type (
@@ -259,6 +261,16 @@ func KeyMarker(value string) Option {
 	return addParam("key-marker", value)
 }
 
+// VersionIdMarker is an option to set version-id-marker parameter
+func VersionIdMarker(value string) Option {
+	return addParam("version-id-marker", value)
+}
+
+// VersionId is an option to set x-oss-version-id parameter
+func VersionId(value string) Option {
+	return addParam("x-oss-version-id", value)
+}
+
 // UploadIDMarker is an option to set upload-id-marker parameter
 func UploadIDMarker(value string) Option {
 	return addParam("upload-id-marker", value)
@@ -314,6 +326,16 @@ func InitCRC(initCRC uint64) Option {
 // Progress set progress listener
 func Progress(listener ProgressListener) Option {
 	return addArg(progressListener, listener)
+}
+
+// GetResponseHeader for get response http header
+func GetResponseHeader(respHeader *http.Header) Option {
+	return addArg(responseHeader, respHeader)
+}
+
+// KeyVersions:object versions info
+func KeyVersions(mVersions map[string]string) Option {
+	return addArg(keysVersions, mVersions)
 }
 
 // ResponseContentType is an option to set response-content-type param
@@ -452,4 +474,20 @@ func isOptionSet(options []Option, option string) (bool, interface{}, error) {
 		return true, val.Value, nil
 	}
 	return false, nil, nil
+}
+
+func getRequestId(header http.Header) string {
+	return header.Get("x-oss-request-id")
+}
+
+func getVersionId(header http.Header) string {
+	return header.Get("x-oss-version-id")
+}
+
+func getDeleteMark(header http.Header) bool {
+	value := header.Get("x-oss-delete-marker")
+	if strings.ToUpper(value) == "TRUE" {
+		return true
+	}
+	return false
 }

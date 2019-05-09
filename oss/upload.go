@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -179,6 +180,13 @@ func (bucket Bucket) uploadFile(objectKey, filePath string, partSize int64, opti
 	payer := getPayer(options)
 	if payer != "" {
 		payerOptions = append(payerOptions, RequestPayer(PayerType(payer)))
+	}
+
+	// get response header
+	respHeader, _ := findOption(options, responseHeader, nil)
+	if respHeader != nil {
+		pRespHeader := respHeader.(*http.Header)
+		payerOptions = append(payerOptions, GetResponseHeader(pRespHeader))
 	}
 
 	// Initialize the multipart upload
@@ -452,6 +460,13 @@ func (bucket Bucket) uploadFileWithCp(objectKey, filePath string, partSize int64
 	payer := getPayer(options)
 	if payer != "" {
 		payerOptions = append(payerOptions, RequestPayer(PayerType(payer)))
+	}
+
+	// get response header
+	respHeader, _ := findOption(options, responseHeader, nil)
+	if respHeader != nil {
+		pRespHeader := respHeader.(*http.Header)
+		payerOptions = append(payerOptions, GetResponseHeader(pRespHeader))
 	}
 
 	// Load CP data

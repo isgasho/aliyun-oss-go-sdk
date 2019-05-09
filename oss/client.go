@@ -113,6 +113,14 @@ func (client Client) CreateBucket(bucketName string, options ...Option) error {
 
 	params := map[string]interface{}{}
 	resp, err := client.do("PUT", bucketName, params, headers, buffer)
+
+	// get response header
+	respHeader, _ := findOption(options, responseHeader, nil)
+	if respHeader != nil {
+		pRespHeader := respHeader.(*http.Header)
+		*pRespHeader = resp.Headers
+	}
+
 	if err != nil {
 		return err
 	}
@@ -140,6 +148,14 @@ func (client Client) ListBuckets(options ...Option) (ListBucketsResult, error) {
 	}
 
 	resp, err := client.do("GET", "", params, nil, nil)
+
+	// get response header
+	respHeader, _ := findOption(options, responseHeader, nil)
+	if respHeader != nil {
+		pRespHeader := respHeader.(*http.Header)
+		*pRespHeader = resp.Headers
+	}
+
 	if err != nil {
 		return out, err
 	}
@@ -646,6 +662,68 @@ func (client Client) GetBucketInfo(bucketName string) (GetBucketInfoResult, erro
 	params := map[string]interface{}{}
 	params["bucketInfo"] = nil
 	resp, err := client.do("GET", bucketName, params, nil, nil)
+	if err != nil {
+		return out, err
+	}
+	defer resp.Body.Close()
+
+	err = xmlUnmarshal(resp.Body, &out)
+	return out, err
+}
+
+// SetBucketVersioning set bucket versioning:Enabled、Suspended
+// bucketName    the bucket name.
+// error    it's nil if no error, otherwise it's an error object.
+func (client Client) SetBucketVersioning(bucketName string, versioningConfig VersioningConfig, options ...Option) error {
+	var err error
+	var bs []byte
+	bs, err = xml.Marshal(versioningConfig)
+
+	if err != nil {
+		return err
+	}
+
+	buffer := new(bytes.Buffer)
+	buffer.Write(bs)
+
+	contentType := http.DetectContentType(buffer.Bytes())
+	headers := map[string]string{}
+	headers[HTTPHeaderContentType] = contentType
+
+	params := map[string]interface{}{}
+	params["versioning"] = nil
+	resp, err := client.do("PUT", bucketName, params, headers, buffer)
+
+	// get response header
+	respHeader, _ := findOption(options, responseHeader, nil)
+	if respHeader != nil {
+		pRespHeader := respHeader.(*http.Header)
+		*pRespHeader = resp.Headers
+	}
+
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	return checkRespCode(resp.StatusCode, []int{http.StatusOK})
+}
+
+// GetBucketVersioning get bucket versioning status:Enabled、Suspended
+// bucketName    the bucket name.
+// error    it's nil if no error, otherwise it's an error object.
+func (client Client) GetBucketVersioning(bucketName string, options ...Option) (VersioningConfig, error) {
+	var out VersioningConfig
+	params := map[string]interface{}{}
+	params["versioning"] = nil
+	resp, err := client.do("GET", bucketName, params, nil, nil)
+
+	// get response header
+	respHeader, _ := findOption(options, responseHeader, nil)
+	if respHeader != nil {
+		pRespHeader := respHeader.(*http.Header)
+		*pRespHeader = resp.Headers
+	}
+
 	if err != nil {
 		return out, err
 	}

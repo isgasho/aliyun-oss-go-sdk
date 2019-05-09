@@ -148,6 +148,13 @@ func (bucket Bucket) copyFile(srcBucketName, srcObjectKey, destBucketName, destO
 		payerOptions = append(payerOptions, RequestPayer(PayerType(payer)))
 	}
 
+	// get response header
+	respHeader, _ := findOption(options, responseHeader, nil)
+	if respHeader != nil {
+		pRespHeader := respHeader.(*http.Header)
+		payerOptions = append(payerOptions, GetResponseHeader(pRespHeader))
+	}
+
 	meta, err := srcBucket.GetObjectDetailedMeta(srcObjectKey, payerOptions...)
 	if err != nil {
 		return err
@@ -389,6 +396,13 @@ func (bucket Bucket) copyFileWithCp(srcBucketName, srcObjectKey, destBucketName,
 	payer := getPayer(options)
 	if payer != "" {
 		payerOptions = append(payerOptions, RequestPayer(PayerType(payer)))
+	}
+
+	// get response header
+	respHeader, _ := findOption(options, responseHeader, nil)
+	if respHeader != nil {
+		pRespHeader := respHeader.(*http.Header)
+		payerOptions = append(payerOptions, GetResponseHeader(pRespHeader))
 	}
 
 	// Load CP data
